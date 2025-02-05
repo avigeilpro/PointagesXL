@@ -1,0 +1,5 @@
+/Connector/.env
+/Connector/node_modules/
+/Connector/AmbPointages/
+/Connector/TxPointages/
+/Pointages/Pointages.xlsm
