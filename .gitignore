@@ -1,7 +1,5 @@
-/.gitignore
 /Connector/.env
 /Connector/node_modules/
-/Connector/AmbPointages/
-/Connector/TxPointages/
-/Pointages/Pointages.xlsm
-/Pointages/~$Pointages.xlsm
+/Connector/data/
+/Pointages/*
+!/Pointages/Pointages_d.xlsm
