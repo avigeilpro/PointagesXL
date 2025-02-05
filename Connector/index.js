@@ -87,7 +87,7 @@ async function getConfig(){
   const data = await firebaseService.readFromFirebase(db, `${branch}/configs`);
   console.log(util.inspect(data, false, null, true /* enable colors */))
   // Obtenir le chemin local du sous-dossier où se trouve le fichier
-  const localFolderPath = ensureLocalFolder(branch);
+  const localFolderPath = ensureLocalFolder(`data/${branch}`);
   const localFilePath = path.join(localFolderPath, "configs.json");
   await exportToJsonFile(data, localFilePath);
 }
@@ -115,7 +115,7 @@ async function getUsers(){
       delete data[user].LastDevice
       delete data[user].LastPointage
     }
-    const localFolderPath = ensureLocalFolder(branch);
+    const localFolderPath = ensureLocalFolder(`data/${branch}`);
     const localFilePath = path.join(localFolderPath, `users.json`);
     await exportToJsonFile(data, localFilePath);
   }
@@ -148,7 +148,7 @@ async function getUserPoint(user){
       delete data[keyId].fetched
     }
 
-    const localFolderPath = ensureLocalFolder(branch);
+    const localFolderPath = ensureLocalFolder(`data/${branch}`);
     const localFilePath = path.join(localFolderPath, `${argv.t ? 'tmp_' : ''}${user}.json`);
     await exportToJsonFile(data, localFilePath);
   }
