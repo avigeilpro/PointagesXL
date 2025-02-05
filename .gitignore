@@ -1,3 +1,4 @@
+/.gitignore
 /Connector/.env
 /Connector/node_modules/
 /Connector/AmbPointages/
