@@ -15,6 +15,9 @@ const __filename = fileURLToPath(import.meta.url);
 // Obtenir le répertoire du fichier actuel
 const __dirname = path.dirname(__filename);
 
+process.stdin.setEncoding('utf8');
+process.stdout.setEncoding('utf8');
+
 // Charger .env depuis le même dossier que le script
 dotenv.config({ path: `${__dirname}/.env` });
 
@@ -94,7 +97,7 @@ async function getConfig(){
 
 async function setConfig(){
   // Lire le fichier configs.json
-  const configPath = path.join(__dirname, `${branch}/configs.json`);
+  const configPath = path.join(__dirname, `data/${branch}/configs.json`);
   const configs = JSON.parse(fs.readFileSync(configPath));
   await firebaseService.updateNode(db, `${branch}/configs`,configs)
 }
@@ -123,7 +126,7 @@ async function getUsers(){
 
 async function setUsers(){
   // Lire le fichier users.json
-  const usersPath = path.join(__dirname, `${branch}/users.json`);
+  const usersPath = path.join(__dirname, `data/${branch}/users.json`);
   const users = JSON.parse(fs.readFileSync(usersPath));
   await firebaseService.updateNode(db,`${branch}/Users`,users,true)
   const data = await firebaseService.readFromFirebase(db, `${branch}/Users`);
@@ -165,7 +168,7 @@ async function setAllPoint(){
 
 async function setUserPoint(user){
   // Lire le fichier configs.json
-  const pointPath = path.join(__dirname, `${branch}/${user}.json`);
+  const pointPath = path.join(__dirname, `data/${branch}/${user}.json`);
   if (await firebaseService.checkFileExists(pointPath)){
     const points = JSON.parse(fs.readFileSync(pointPath));
     await firebaseService.updateNode(`${branch}/Pointages/${user}`,points)
