@@ -108,6 +108,7 @@ async function getAllPoint(){
     for (const [user,udata] of Object.entries(data)){
       await getUserPoint(user) ;
     }
+    await getVName();
   }
 }
 
@@ -115,11 +116,28 @@ async function getUsers(){
   const data = await firebaseService.readFromFirebase(db, `${branch}/Users`);
   if (data){
     for (const [user,udata] of Object.entries(data)){
-      delete data[user].LastDevice
+      delete data[user].deviceId
       delete data[user].LastPointage
+      delete data[user].PtStartTime
+      delete data[user].versionName
     }
     const localFolderPath = ensureLocalFolder(`data/${branch}`);
     const localFilePath = path.join(localFolderPath, `users.json`);
+    await exportToJsonFile(data, localFilePath);
+  }
+}
+
+async function getVName(){
+  const data = await firebaseService.readFromFirebase(db, `${branch}/Users`);
+  if (data){
+    for (const [user,udata] of Object.entries(data)){
+      delete data[user].deviceId
+      delete data[user].LastPointage
+      delete data[user].PtStartTime
+      delete data[user].Name
+    }
+    const localFolderPath = ensureLocalFolder(`data/${branch}`);
+    const localFilePath = path.join(localFolderPath, `vnames.json`);
     await exportToJsonFile(data, localFilePath);
   }
 }
