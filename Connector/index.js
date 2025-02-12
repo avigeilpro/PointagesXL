@@ -36,15 +36,15 @@ const { app, db } = firebaseService.connectFirebase();
 const argv = yargs(hideBin(process.argv))
   .option('g', {
     alias: 'get',
-    describe: 'lit les données de la base, e.g., config, utilisateurs ou pointages',
+    describe: 'lit les données de la base, e.g., configs, utilisateurs ou pointages',
     type: 'string',
-    choices: ['config', 'users', 'point']
+    choices: ['configs', 'users', 'point']
   })
   .option('s', {
     alias: 'set',
-    describe: 'écrit/update les données dans la base, e.g., config, utilisateurs',
+    describe: 'écrit/update les données dans la base, e.g., configs, utilisateurs',
     type: 'string',
-    choices: ['config', 'users', 'point'],
+    choices: ['configs', 'users', 'point'],
   })
   .option('t', {
     alias: 'temp',
@@ -176,13 +176,13 @@ async function setUserPoint(user){
 }
 
 // Exécuter l'opération en fonction des arguments
-if (argv.g === 'config') {
+if (argv.g === 'configs') {
   await getConfig();
 } else if (argv.g === 'point') {
   await getAllPoint();
 } else if (argv.g === 'users') {
   await getUsers();
-} else if (argv.s === 'config') {
+} else if (argv.s === 'configs') {
   await setConfig();
 } else if (argv.s === 'users') {
   await setUsers();
