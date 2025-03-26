@@ -37,20 +37,6 @@ export const writeToFirebase = async (db, nodePath, value) => {
   await set(nodeRef, value); // Utilisation correcte de set
 };
 
-// Fonction pour mettre à jour un noeud dans la base
-/*export const updateNode = async (db, nodePath, updates) => {
-  try {
-    //const db = getDatabase(); // Connexion à la base de données
-    const nodeRef = ref(db, nodePath); // Référence au nœud
-
-    // Mise à jour des données dans Firebase
-    await update(nodeRef, updates);
-  } catch (error) {
-    console.error(`Erreur lors de la mise à jour du nœud ${nodePath} :`, error);
-    throw error;
-  }
-};*/
-
 // Fonction pour mettre à jour un noeud dans la base avec une option de fusion
 export const updateNode = async (db, nodePath, updates, mix = false) => {
   try {
@@ -143,6 +129,30 @@ export const searchPointagesWithFetchedFalse = async (db,branch, userId) => {
     }
   } catch (error) {
     console.error("Error searching pointages:", error);
+    throw error;
+  }
+};
+
+// Fonction de recherche pour les pointages avec "fetched" égal à false
+export const searchCorrectionsWithFetchedFalse = async (db,branch, userId) => {
+  try {
+    // Référence au nœud des pointages de l'utilisateur
+    const parentRef = ref(db, `${branch}/Corrections/${userId}`);
+
+    // Requête pour filtrer les pointages où "fetched" == false
+    const filteredQuery = query(parentRef, orderByChild('fetched'), equalTo(false));
+
+    // Exécution de la requête
+    const snapshot = await get(filteredQuery);
+
+    if (snapshot.exists()) {
+      return snapshot.val(); // Retourne les pointages correspondants
+    } else {
+      console.log("No matching corrections found.");
+      return null;
+    }
+  } catch (error) {
+    console.error("Error searching corrections:", error);
     throw error;
   }
 };

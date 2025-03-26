@@ -107,6 +107,7 @@ async function getAllPoint(){
   if (data){
     for (const [user,udata] of Object.entries(data)){
       await getUserPoint(user) ;
+      await getUserCorrect(user) ;
     }
     await getVName();
   }
@@ -171,6 +172,26 @@ async function getUserPoint(user){
 
     const localFolderPath = ensureLocalFolder(`data/${branch}`);
     const localFilePath = path.join(localFolderPath, `${argv.t ? 'tmp_' : ''}${user}.json`);
+    await exportToJsonFile(data, localFilePath);
+  }
+}
+
+async function getUserCorrect(user){
+  const data = await firebaseService.searchCorrectionsWithFetchedFalse(db, branch, user);
+  if (data){
+    if (!argv.t) {
+      for (const [keyId,point] of Object.entries(data)){
+        data[keyId].fetched = true
+      }
+      await firebaseService.updateNode(db, `${branch}/Corrections/${user}`, data);
+    }
+    for (const [keyId,point] of Object.entries(data)){
+      //supprime fetched dans l'objet data car inutile en sortie fichier
+      delete data[keyId].fetched
+    }
+
+    const localFolderPath = ensureLocalFolder(`data/${branch}`);
+    const localFilePath = path.join(localFolderPath, `${argv.t ? 'tmp_co_' : 'co_'}${user}.json`);
     await exportToJsonFile(data, localFilePath);
   }
 }
