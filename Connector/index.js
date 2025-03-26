@@ -157,6 +157,14 @@ async function setUsers(){
 }
 
 async function getUserPoint(user){
+  const localFolderPath = ensureLocalFolder(`data/${branch}`);
+  const localFilePath = path.join(localFolderPath, `${user}.json`);
+  //charge le contenu du fichier localFilePath dans old_data
+  let old_data = {};
+  if (fs.existsSync(localFilePath)) {
+    old_data = JSON.parse(fs.readFileSync(localFilePath));
+  }
+  
   const data = await firebaseService.searchPointagesWithFetchedFalse(db, branch, user);
   if (data){
     if (!argv.t) {
@@ -169,14 +177,21 @@ async function getUserPoint(user){
       //supprime fetched dans l'objet data car inutile en sortie fichier
       delete data[keyId].fetched
     }
-
-    const localFolderPath = ensureLocalFolder(`data/${branch}`);
-    const localFilePath = path.join(localFolderPath, `${argv.t ? 'tmp_' : ''}${user}.json`);
-    await exportToJsonFile(data, localFilePath);
+    //fusionner old_data avec data avant d'exporter (éviter les doublons)
+    const expdata = { ...old_data, ...data };
+    await exportToJsonFile(expdata, localFilePath);
   }
 }
 
 async function getUserCorrect(user){
+  const localFolderPath = ensureLocalFolder(`data/${branch}`);
+  const localFilePath = path.join(localFolderPath, `co_${user}.json`);
+  //charge le contenu du fichier localFilePath dans old_data
+  let old_data = {};
+  if (fs.existsSync(localFilePath)) {
+    old_data = JSON.parse(fs.readFileSync(localFilePath));
+  }
+
   const data = await firebaseService.searchCorrectionsWithFetchedFalse(db, branch, user);
   if (data){
     if (!argv.t) {
@@ -190,9 +205,9 @@ async function getUserCorrect(user){
       delete data[keyId].fetched
     }
 
-    const localFolderPath = ensureLocalFolder(`data/${branch}`);
-    const localFilePath = path.join(localFolderPath, `${argv.t ? 'tmp_co_' : 'co_'}${user}.json`);
-    await exportToJsonFile(data, localFilePath);
+    //fusionner old_data avec data avant d'exporter (éviter les doublons)
+    const expdata = { ...old_data, ...data };
+    await exportToJsonFile(expdata, localFilePath);
   }
 }
 
