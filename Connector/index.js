@@ -147,13 +147,14 @@ async function setUsers(){
   // Lire le fichier users.json
   const usersPath = path.join(__dirname, `data/${branch}/users.json`);
   const users = JSON.parse(fs.readFileSync(usersPath));
-  await firebaseService.updateNode(db,`${branch}/Users`,users,true)
   const data = await firebaseService.readFromFirebase(db, `${branch}/Users`);
   for (const [user,udata] of Object.entries(data)){
     if (!users[user]){
-      firebaseService.deleteNode(db,`${branch}/Users/${user}`);
+      await firebaseService.deleteNode(db,`${branch}/Users/${user}`);
     }
   }
+  await firebaseService.updateNode(db,`${branch}/Users`,users,true)
+
 }
 
 async function getUserPoint(user){
