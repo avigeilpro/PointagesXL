@@ -51,6 +51,11 @@ const argv = yargs(hideBin(process.argv))
     describe: 'ne marque pas les pointages comme lu',
     type: 'boolean',
   })
+  .option('c', {
+    alias: 'csv',
+    describe: 'écrit les données dans un fichier csv (pointages uniquement)',
+    type: 'boolean',
+  })
   .check((argv) => {
     if (!argv.g && !argv.s) {
       throw new Error("Vous devez préciser au moins l'option '--get' ou '--set'.");
@@ -85,6 +90,26 @@ async function exportToJsonFile(data, filePath) {
   }
 }
 
+async function exportToCSVFile(data, user, filepath) {
+  let dataByDates = {}
+  let localFilePath = "";
+  if (data){
+    for (const [keyId,point] of Object.entries(data)){
+      if (!dataByDates[data[keyId].date.replaceAll("-","")]) {dataByDates[data[keyId].date.replaceAll("-","")] = []}
+      dataByDates[data[keyId].date.replaceAll("-","")].push(`${user};${data[keyId].heure};${data[keyId].codeFct};${data[keyId].gps}`);
+    }
+    for (const [keyId,point] of Object.entries(dataByDates)){
+      try {
+        localFilePath = path.join(filepath, `${keyId}.csv`);
+        // S'assure que le fichier existe, sinon le crée
+        await fsp.appendFile(localFilePath, `${dataByDates[keyId].join("\n")}\n`, 'utf8');
+        console.log(`Lignes ajoutée au fichier : ${localFilePath}`);
+      } catch (err) {
+        console.error('Erreur lors de l’écriture dans le fichier :', err);
+      }
+    }
+  }
+}
 
 async function getConfig(){
   const data = await firebaseService.readFromFirebase(db, `${branch}/configs`);
@@ -165,7 +190,7 @@ async function getUserPoint(user){
   if (fs.existsSync(localFilePath)) {
     old_data = JSON.parse(fs.readFileSync(localFilePath));
   }
-  
+
   const data = await firebaseService.searchPointagesWithFetchedFalse(db, branch, user);
   if (data){
     if (!argv.t) {
@@ -180,7 +205,12 @@ async function getUserPoint(user){
     }
     //fusionner old_data avec data avant d'exporter (éviter les doublons)
     const expdata = { ...old_data, ...data };
-    await exportToJsonFile(expdata, localFilePath);
+    if (!argv.csv){
+      await exportToJsonFile(expdata, localFilePath);
+    } else {
+      const localFolderPathcsv = ensureLocalFolder(`data/${branch}/csv`);
+      await exportToCSVFile(data,user,localFolderPathcsv);
+    }
   }
 }
 
