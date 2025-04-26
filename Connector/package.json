@@ -11,6 +11,7 @@
   "description": "",
   "dependencies": {
     "dotenv": "^16.4.7",
-    "firebase": "^11.2.0"
+    "firebase": "^11.2.0",
+    "google-play-scraper": "^10.0.1"
   }
 }
