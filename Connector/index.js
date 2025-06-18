@@ -180,7 +180,7 @@ async function getVName(){
     if (gplayVersion) {
       data.gplay = { versionName: gplayVersion };
     }
-    
+
     const localFolderPath = ensureLocalFolder(`data/${branch}`);
     const localFilePath = path.join(localFolderPath, `vnames.json`);
     await exportToJsonFile(data, localFilePath);
@@ -224,7 +224,7 @@ async function getUserPoint(user){
     }
     //fusionner old_data avec data avant d'exporter (éviter les doublons)
     const expdata = { ...old_data, ...data };
-    if (!argv.csv){
+    if (!argv.c){
       await exportToJsonFile(expdata, localFilePath);
     } else {
       const localFolderPathcsv = ensureLocalFolder(`data/${branch}/csv`);
