@@ -1,5 +1,6 @@
 /Connector/.env
 /Connector/node_modules/
 /Connector/data/
+/Connector/log.txt
 /Pointages/*
 !/Pointages/Pointages_d.xlsm

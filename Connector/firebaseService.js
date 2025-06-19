@@ -124,7 +124,7 @@ export const searchPointagesWithFetchedFalse = async (db,branch, userId) => {
     if (snapshot.exists()) {
       return snapshot.val(); // Retourne les pointages correspondants
     } else {
-      console.log("No matching pointages found.");
+      console.log(`${userId} : Aucun pointage trouvé`);
       return null;
     }
   } catch (error) {
@@ -148,7 +148,7 @@ export const searchCorrectionsWithFetchedFalse = async (db,branch, userId) => {
     if (snapshot.exists()) {
       return snapshot.val(); // Retourne les pointages correspondants
     } else {
-      console.log("No matching corrections found.");
+      console.log(`${userId} : Aucune demande de correction trouvée`);
       return null;
     }
   } catch (error) {

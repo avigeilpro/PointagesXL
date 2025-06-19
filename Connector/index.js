@@ -71,6 +71,22 @@ const argv = yargs(hideBin(process.argv))
   .help()
   .argv;
 
+  async function appendToLog(text) {
+    try {
+      const logPath = path.join(__dirname, 'log.txt');
+
+      const now = new Date();
+      const timestamp = now.toISOString().replace('T', ' ').substring(0, 19); // "aaaa-mm-dd hh:mm:ss"
+
+      const line = `${timestamp} ${text}\n`;
+
+      await fsp.appendFile(logPath, line, 'utf8');
+    } catch (error) {
+      console.error('Erreur lors de l\'écriture dans log.txt :', error);
+    }
+  }
+
+
 // Crée un sous-dossier local s'il n'existe pas
 function ensureLocalFolder(folderName) {
     const localFolderPath = path.join(__dirname, folderName);
@@ -106,7 +122,7 @@ async function exportToCSVFile(data, user, filepath) {
         localFilePath = path.join(filepath, `${keyId}.csv`);
         // S'assure que le fichier existe, sinon le crée
         await fsp.appendFile(localFilePath, `${dataByDates[keyId].join("\n")}\n`, 'utf8');
-        console.log(`Lignes ajoutée au fichier : ${localFilePath}`);
+        //console.log(`Lignes ajoutée au fichier : ${localFilePath}`);
       } catch (err) {
         console.error('Erreur lors de l’écriture dans le fichier :', err);
       }
@@ -202,6 +218,7 @@ async function setUsers(){
 }
 
 async function getUserPoint(user){
+  await appendToLog(`getUserPoint ${user}`);
   const localFolderPath = ensureLocalFolder(`data/${branch}`);
   const localFilePath = path.join(localFolderPath, `${user}.json`);
   //charge le contenu du fichier localFilePath dans old_data
@@ -209,21 +226,24 @@ async function getUserPoint(user){
   if (fs.existsSync(localFilePath)) {
     old_data = JSON.parse(fs.readFileSync(localFilePath));
   }
-
   const data = await firebaseService.searchPointagesWithFetchedFalse(db, branch, user);
   if (data){
     if (!argv.t) {
       for (const [keyId,point] of Object.entries(data)){
         data[keyId].fetched = true
+        await appendToLog(`getUserPoint ${user} set ${keyId} fetched to true`);
       }
+      await appendToLog(`getUserPoint ${user} updateNode`);
       await firebaseService.updateNode(db, `${branch}/Pointages/${user}`, data);
     }
     for (const [keyId,point] of Object.entries(data)){
       //supprime fetched dans l'objet data car inutile en sortie fichier
       delete data[keyId].fetched
+      await appendToLog(`getUserPoint ${user} remove fetched from ${keyId}`);
     }
     //fusionner old_data avec data avant d'exporter (éviter les doublons)
     const expdata = { ...old_data, ...data };
+    await appendToLog(`getUserPoint ${user} export`);
     if (!argv.c){
       await exportToJsonFile(expdata, localFilePath);
     } else {
@@ -234,6 +254,7 @@ async function getUserPoint(user){
 }
 
 async function getUserCorrect(user){
+  await appendToLog(`getUserCorrect ${user}`);
   const localFolderPath = ensureLocalFolder(`data/${branch}`);
   const localFilePath = path.join(localFolderPath, `co_${user}.json`);
   //charge le contenu du fichier localFilePath dans old_data
@@ -247,16 +268,20 @@ async function getUserCorrect(user){
     if (!argv.t) {
       for (const [keyId,point] of Object.entries(data)){
         data[keyId].fetched = true
+        await appendToLog(`getUserCorrect ${user} set ${keyId} fetched to true`);
       }
+      await appendToLog(`getUserCorrect ${user} updateNode`);
       await firebaseService.updateNode(db, `${branch}/Corrections/${user}`, data);
     }
     for (const [keyId,point] of Object.entries(data)){
       //supprime fetched dans l'objet data car inutile en sortie fichier
       delete data[keyId].fetched
+      await appendToLog(`getUserCorrect ${user} remove fetched from ${keyId}`);
     }
 
     //fusionner old_data avec data avant d'exporter (éviter les doublons)
     const expdata = { ...old_data, ...data };
+    await appendToLog(`getUserCorrect ${user} export`);
     await exportToJsonFile(expdata, localFilePath);
   }
 }
