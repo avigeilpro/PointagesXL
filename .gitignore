@@ -4,3 +4,4 @@
 /Connector/log.txt
 /Pointages/*
 !/Pointages/Pointages_d.xlsm
+/demo/demo.xlsm
