@@ -35,13 +35,19 @@ const rl = readline.createInterface({
 
 const { app, db } = firebaseService.connectFirebase();
 
+const today = new Date();
+const yyyy = today.getFullYear();
+const mm = String(today.getMonth() + 1).padStart(2, '0'); // les mois commencent à 0
+const dd = String(today.getDate()).padStart(2, '0');
+
+const dateDuJour = `${yyyy}-${mm}-${dd}`;
 
 const argv = yargs(hideBin(process.argv))
   .option('g', {
     alias: 'get',
-    describe: 'lit les données de la base, e.g., configs, utilisateurs ou pointages',
+    describe: 'lit les données de la base, e.g., configs, utilisateurs, pointages ou corrections',
     type: 'string',
-    choices: ['configs', 'users', 'point']
+    choices: ['configs', 'users', 'point','correct']
   })
   .option('s', {
     alias: 'set',
@@ -57,6 +63,11 @@ const argv = yargs(hideBin(process.argv))
   .option('c', {
     alias: 'csv',
     describe: 'écrit les données dans un fichier csv (pointages uniquement)',
+    type: 'boolean',
+  })
+  .option('p', {
+    alias: 'past',
+    describe: 'ne récupère que les pointages et corrections datant au plus tard de la veille',
     type: 'boolean',
   })
   .check((argv) => {
@@ -157,6 +168,16 @@ async function getAllPoint(){
   }
 }
 
+async function getAllCorrect(){
+  const data = await firebaseService.readFromFirebase(db, `${branch}/Users`);
+  if (data){
+    for (const [user,udata] of Object.entries(data)){
+      await getUserCorrect(user) ;
+    }
+    await getVName();
+  }
+}
+
 async function getUsers(){
   const data = await firebaseService.readFromFirebase(db, `${branch}/Users`);
   if (data){
@@ -230,25 +251,35 @@ async function getUserPoint(user){
   if (data){
     if (!argv.t) {
       for (const [keyId,point] of Object.entries(data)){
-        data[keyId].fetched = true
-        await appendToLog(`getUserPoint ${user} set ${keyId} fetched to true`);
+        if ((argv.p) && (data[keyId].date == dateDuJour)){
+          delete data[keyId]
+        } else {
+          data[keyId].fetched = true
+          await appendToLog(`getUserPoint ${user} set ${keyId} fetched to true`);
+        }
       }
-      await appendToLog(`getUserPoint ${user} updateNode`);
-      await firebaseService.updateNode(db, `${branch}/Pointages/${user}`, data);
+      if (Object.keys(data).length > 0) {
+        await appendToLog(`getUserPoint ${user} updateNode`);
+        await firebaseService.updateNode(db, `${branch}/Pointages/${user}`, data);
+      } else {
+        console.log(`${user} : Aucun pointage trouvé`);
+      }
     }
-    for (const [keyId,point] of Object.entries(data)){
-      //supprime fetched dans l'objet data car inutile en sortie fichier
-      delete data[keyId].fetched
-      await appendToLog(`getUserPoint ${user} remove fetched from ${keyId}`);
-    }
-    //fusionner old_data avec data avant d'exporter (éviter les doublons)
-    const expdata = { ...old_data, ...data };
-    await appendToLog(`getUserPoint ${user} export`);
-    if (!argv.c){
-      await exportToJsonFile(expdata, localFilePath);
-    } else {
-      const localFolderPathcsv = ensureLocalFolder(`data/${branch}/csv`);
-      await exportToCSVFile(data,user,localFolderPathcsv);
+    if (Object.keys(data).length > 0) {
+      for (const [keyId,point] of Object.entries(data)){
+        //supprime fetched dans l'objet data car inutile en sortie fichier
+        delete data[keyId].fetched
+        await appendToLog(`getUserPoint ${user} remove fetched from ${keyId}`);
+      }
+      //fusionner old_data avec data avant d'exporter (éviter les doublons)
+      const expdata = { ...old_data, ...data };
+      await appendToLog(`getUserPoint ${user} export`);
+      if (!argv.c){
+        await exportToJsonFile(expdata, localFilePath);
+      } else {
+        const localFolderPathcsv = ensureLocalFolder(`data/${branch}/csv`);
+        await exportToCSVFile(data,user,localFolderPathcsv);
+      }
     }
   }
 }
@@ -267,22 +298,33 @@ async function getUserCorrect(user){
   if (data){
     if (!argv.t) {
       for (const [keyId,point] of Object.entries(data)){
-        data[keyId].fetched = true
-        await appendToLog(`getUserCorrect ${user} set ${keyId} fetched to true`);
+        if ((argv.p) && (data[keyId].date == dateDuJour)){
+          delete data[keyId]
+        } else {
+          data[keyId].fetched = true
+          await appendToLog(`getUserCorrect ${user} set ${keyId} fetched to true`);
+        }
       }
-      await appendToLog(`getUserCorrect ${user} updateNode`);
-      await firebaseService.updateNode(db, `${branch}/Corrections/${user}`, data);
+      if (Object.keys(data).length > 0) {
+        await appendToLog(`getUserCorrect ${user} updateNode`);
+        await firebaseService.updateNode(db, `${branch}/Corrections/${user}`, data);
+      } else {
+        console.log(`${user} : Aucune demande de correction trouvée`);
+      }
     }
-    for (const [keyId,point] of Object.entries(data)){
-      //supprime fetched dans l'objet data car inutile en sortie fichier
-      delete data[keyId].fetched
-      await appendToLog(`getUserCorrect ${user} remove fetched from ${keyId}`);
-    }
+    if (Object.keys(data).length > 0) {
 
-    //fusionner old_data avec data avant d'exporter (éviter les doublons)
-    const expdata = { ...old_data, ...data };
-    await appendToLog(`getUserCorrect ${user} export`);
-    await exportToJsonFile(expdata, localFilePath);
+      for (const [keyId,point] of Object.entries(data)){
+        //supprime fetched dans l'objet data car inutile en sortie fichier
+        delete data[keyId].fetched
+        await appendToLog(`getUserCorrect ${user} remove fetched from ${keyId}`);
+      }
+
+      //fusionner old_data avec data avant d'exporter (éviter les doublons)
+      const expdata = { ...old_data, ...data };
+      await appendToLog(`getUserCorrect ${user} export`);
+      await exportToJsonFile(expdata, localFilePath);
+    }
   }
 }
 
@@ -309,6 +351,8 @@ if (argv.g === 'configs') {
   await getConfig();
 } else if (argv.g === 'point') {
   await getAllPoint();
+} else if (argv.g === 'correct') {
+  await getAllCorrect();
 } else if (argv.g === 'users') {
   await getUsers();
 } else if (argv.s === 'configs') {
