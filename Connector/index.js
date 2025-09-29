@@ -9,7 +9,6 @@ import util from 'util';
 import readline from 'readline';
 import dotenv from 'dotenv';
 import { dirname } from 'path';
-import gplay from 'google-play-scraper';
 
 const packageName = 'com.avigeilcorp.txpointages';
 
@@ -193,16 +192,6 @@ async function getUsers(){
   }
 }
 
-async function getGooglePlayVersion() {
-  try {
-    const app = await gplay.app({ appId: packageName });
-    return app.version; // Exemple : "1.2.3"
-  } catch (err) {
-    console.error(`Erreur lors de la récupération de la version sur Google Play : ${err.message}`);
-    return null;
-  }
-}
-
 async function getVName(){
   const data = await firebaseService.readFromFirebase(db, `${branch}/Users`);
   if (data){
@@ -212,11 +201,9 @@ async function getVName(){
       delete data[user].PtStartTime
       delete data[user].Name
     }
-    // 👇 Ajouter la version trouvée sur Google Play ici
-    const gplayVersion = await getGooglePlayVersion();
-    if (gplayVersion) {
-      data.gplay = { versionName: gplayVersion };
-    }
+    //Récupère la version Google play
+    const gplayVersion = await firebaseService.readFromFirebase(db, `GPlay/Version`);
+    data.gplay = { versionName: gplayVersion };
 
     const localFolderPath = ensureLocalFolder(`data/${branch}`);
     const localFilePath = path.join(localFolderPath, `vnames.json`);
