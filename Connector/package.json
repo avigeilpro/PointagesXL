@@ -11,6 +11,6 @@
   "description": "",
   "dependencies": {
     "dotenv": "^16.4.7",
-    "firebase": "^11.2.0"
+    "firebase": "^12.3.0"
   }
 }
