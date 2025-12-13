@@ -23,9 +23,6 @@ process.stdout.setEncoding('utf8');
 // Charger .env depuis le même dossier que le script
 dotenv.config({ path: `${__dirname}/.env` });
 
-var branch = process.env.branch;
-console.error("branch :", branch);
-
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
@@ -68,6 +65,11 @@ const argv = yargs(hideBin(process.argv))
     alias: 'past',
     describe: 'ne récupère que les pointages et corrections datant au plus tard de la veille',
     type: 'boolean',
+  })
+  .option('b', {
+    alias: 'branch',
+    describe: 'spécifie la branche (overwrite du fichier env)',
+    type: 'string',
   })
   .check((argv) => {
     if (!argv.g && !argv.s) {
@@ -216,9 +218,11 @@ async function setUsers(){
   const usersPath = path.join(__dirname, `data/${branch}/users.json`);
   const users = JSON.parse(fs.readFileSync(usersPath));
   const data = await firebaseService.readFromFirebase(db, `${branch}/Users`);
-  for (const [user,udata] of Object.entries(data)){
-    if (!users[user]){
-      await firebaseService.deleteNode(db,`${branch}/Users/${user}`);
+  if (data !== null) {
+    for (const [user,udata] of Object.entries(data)){
+      if (!users[user]){
+        await firebaseService.deleteNode(db,`${branch}/Users/${user}`);
+      }
     }
   }
   await firebaseService.updateNode(db,`${branch}/Users`,users,true)
@@ -332,6 +336,9 @@ async function setUserPoint(user){
     await firebaseService.updateNode(`${branch}/Pointages/${user}`,points)
   }
 }
+
+const branch = argv.b ?? process.env.branch;
+console.error("branch :", branch);
 
 // Exécuter l'opération en fonction des arguments
 if (argv.g === 'configs') {
